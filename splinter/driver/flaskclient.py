@@ -253,7 +253,10 @@ class FlaskClient(DriverAPI):
             elif control_type == 'radio':
                 control.value = value  # [option for option in control.options if option == value]
             elif control_type == 'select':
-                control.value = [value]
+                if isinstance(value, list):
+                    control.value = value
+                else:
+                    control.value = [value]
             else:
                 # text, textarea, password, tel
                 control.value = value
