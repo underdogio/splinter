@@ -18,6 +18,7 @@ from splinter.element_list import ElementList
 from splinter.exceptions import ElementDoesNotExist
 from splinter.request_handler.status_code import StatusCode
 
+
 class CookieManager(CookieManagerAPI):
 
     def __init__(self, browser_cookies):
