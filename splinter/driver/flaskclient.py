@@ -18,7 +18,6 @@ from splinter.element_list import ElementList
 from splinter.exceptions import ElementDoesNotExist
 from splinter.request_handler.status_code import StatusCode
 
-
 class CookieManager(CookieManagerAPI):
 
     def __init__(self, browser_cookies):
@@ -94,7 +93,14 @@ class FlaskClient(DriverAPI):
         self._post_load()
 
     def serialize(self, form):
-        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
+        data = {}
+        for k, v in form.fields.items():
+            if v is None:
+                continue
+            if isinstance(v, lxml.html.MultipleSelectOptions):
+                data[k] = [val for val in v]
+            else:
+                data[k] = v
         for key in form.inputs.keys():
             input = form.inputs[key]
             if getattr(input, 'type', '') == 'file' and key in data:
