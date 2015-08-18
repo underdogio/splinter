@@ -93,6 +93,14 @@ class FlaskClient(DriverAPI):
         self._last_urls.append(url)
         self._post_load()
 
+    def serialize(self, form):
+        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
+        for key in form.inputs.keys():
+            input = form.inputs[key]
+            if getattr(input, 'type', '') == 'file' and key in data:
+                data[key] = open(data[key], 'rb')
+        return data
+
     def submit(self, form):
         method = form.attrib['method']
         func_method = getattr(self._browser, method.lower())
@@ -102,11 +110,7 @@ class FlaskClient(DriverAPI):
         else:
             url = self._url
         self._url = url
-        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
-        for key in form.inputs.keys():
-            input = form.inputs[key]
-            if getattr(input, 'type', '') == 'file' and key in data:
-                data[key] = open(data[key], 'rb')
+        data = self.serialize(form)
         self._response = func_method(url, data=data, follow_redirects=True)
         self._post_load()
         return self._response

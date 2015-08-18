@@ -44,13 +44,11 @@ class FlaskClientDriverTest(BaseBrowserTests, unittest.TestCase):
 
     def test_serialize_select_mutiple(self):
         "should serialize a select with multiple values into a list"
-        # TODO: Implement me
-        self.browser.attach_file('file', file_path)
-        self.browser.find_by_name('upload').click()
+        self.browser.select('pets', ['cat', 'dog'])
+        form = self.browser.find_by_name('send')._get_parent_form()
+        data = self.browser.serialize(form)
 
-        html = self.browser.html
-        assert 'text/plain' in html
-        assert open(file_path, 'rb').read().decode('utf-8') in html
+        assert data['pets'] == ['cat', 'dog']
 
     def test_forward_to_none_page(self):
         "should not fail when trying to forward to none"
