@@ -47,8 +47,6 @@ class FlaskClientDriverTest(BaseBrowserTests, unittest.TestCase):
         self.browser.select('pets', ['cat', 'dog'])
         form = self.browser.find_by_name('send')._get_parent_form()
         data = self.browser.serialize(form)
-
-        print data
         assert data['pets'] == ['cat', 'dog']
 
     def test_forward_to_none_page(self):
