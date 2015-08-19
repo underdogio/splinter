@@ -10,7 +10,7 @@ import re
 import time
 import sys
 
-from flask.testing import FlaskClient
+from flask.testing import FlaskClient, make_test_environ_builder
 import lxml.html
 from lxml.cssselect import CSSSelector
 from splinter.cookie_manager import CookieManagerAPI
@@ -18,13 +18,73 @@ from splinter.driver import DriverAPI, ElementAPI
 from splinter.element_list import ElementList
 from splinter.exceptions import ElementDoesNotExist
 from splinter.request_handler.status_code import StatusCode
+from werkzeug.test import EnvironBuilder
 
 
 class SplinterFlaskClient(FlaskClient):
     """FlaskClient with redirect support"""
-    pass
-    # def open():
-    #     pass
+
+    def open(self, *args, **kwargs):
+        # https://github.com/mitsuhiko/flask/blob/0.10.1/flask/testing.py#L96-L108
+        kwargs.setdefault('environ_overrides', {}) \
+            ['flask._preserve_context'] = self.preserve_context
+
+        as_tuple = kwargs.pop('as_tuple', False)
+        buffered = kwargs.pop('buffered', False)
+        follow_redirects = kwargs.pop('follow_redirects', False)
+        builder = make_test_environ_builder(self.application, *args, **kwargs)
+        args = [builder]
+        kwargs = dict(
+            as_tuple=as_tuple,
+            buffered=buffered,
+            follow_redirects=follow_redirects,
+        )
+
+        # https://github.com/mitsuhiko/werkzeug/blob/0.10.4/werkzeug/test.py#L701-L769
+        as_tuple = kwargs.pop('as_tuple', False)
+        buffered = kwargs.pop('buffered', False)
+        follow_redirects = kwargs.pop('follow_redirects', False)
+        environ = None
+        if not kwargs and len(args) == 1:
+            if isinstance(args[0], EnvironBuilder):
+                environ = args[0].get_environ()
+            elif isinstance(args[0], dict):
+                environ = args[0]
+        if environ is None:
+            builder = EnvironBuilder(*args, **kwargs)
+            try:
+                environ = builder.get_environ()
+            finally:
+                builder.close()
+
+        response = self.run_wsgi_app(environ, buffered=buffered)
+
+        # handle redirects
+        redirect_chain = []
+        while 1:
+            status_code = int(response[1].split(None, 1)[0])
+            if status_code not in (301, 302, 303, 305, 307) \
+               or not follow_redirects:
+                break
+            new_location = response[2]['location']
+
+            method = 'GET'
+            if status_code == 307:
+                method = environ['REQUEST_METHOD']
+
+            new_redirect_entry = (new_location, status_code)
+            if new_redirect_entry in redirect_chain:
+                raise ClientRedirectError('loop detected')
+            redirect_chain.append(new_redirect_entry)
+            environ, response = self.resolve_redirect(response, new_location,
+                                                      environ,
+                                                      buffered=buffered)
+
+        if self.response_wrapper is not None:
+            response = self.response_wrapper(*response)
+        if as_tuple:
+            return environ, response
+        return response
 
 
 class CookieManager(CookieManagerAPI):
