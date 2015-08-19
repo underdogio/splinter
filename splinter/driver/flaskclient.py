@@ -76,11 +76,10 @@ class SplinterFlaskClient(FlaskClient):
             if new_redirect_entry in redirect_chain:
                 raise ClientRedirectError('loop detected')
             redirect_chain.append(new_redirect_entry)
-            environ, response, redirect_chain = self.resolve_redirect(response, new_location,
+            environ, response, _ = self.resolve_redirect(response, new_location,
                                                       environ,
                                                       buffered=buffered)
 
-        # print response
         if self.response_wrapper is not None:
             response = self.response_wrapper(*response)
         # Modified code here
@@ -150,6 +149,12 @@ class FlaskClient(DriverAPI):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
+    def _handle_redirect_chain(self):
+        if self._redirect_chain:
+            for redirect_url, redirect_code in self._redirect_chain:
+                self._last_urls.append(redirect_url)
+            self._url = self._last_urls[-1]
+
     def _post_load(self):
         self._forms = {}
         try:
@@ -162,6 +167,7 @@ class FlaskClient(DriverAPI):
         self._url = url
         _, self._response, self._redirect_chain = self._browser.get(url, as_tuple=True, follow_redirects=True)
         self._last_urls.append(url)
+        self._handle_redirect_chain()
         self._post_load()
 
     def submit(self, form):
@@ -179,7 +185,7 @@ class FlaskClient(DriverAPI):
             if getattr(input, 'type', '') == 'file' and key in data:
                 data[key] = open(data[key], 'rb')
         _, self._response, self._redirect_chain = func_method(url, as_tuple=True, data=data, follow_redirects=True)
-        print self._response
+        self._handle_redirect_chain()
         self._post_load()
         return self._response
 

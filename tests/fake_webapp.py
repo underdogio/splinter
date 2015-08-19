@@ -136,7 +136,7 @@ def redirected():
     return redirect(location)
 
 
-@app.route('/redirectlocation')
+@app.route('/redirect-location')
 def redirect_location():
     return EXAMPLE_REDIRECT_LOCATION_HTML
 
