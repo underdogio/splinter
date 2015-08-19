@@ -170,6 +170,21 @@ class FlaskClient(DriverAPI):
         self._handle_redirect_chain()
         self._post_load()
 
+    def serialize(self, form):
+        data = {}
+        for k, v in form.fields.items():
+            if v is None:
+                continue
+            if isinstance(v, lxml.html.MultipleSelectOptions):
+                data[k] = [val for val in v]
+            else:
+                data[k] = v
+        for key in form.inputs.keys():
+            input = form.inputs[key]
+            if getattr(input, 'type', '') == 'file' and key in data:
+                data[key] = open(data[key], 'rb')
+        return data
+
     def submit(self, form):
         method = form.attrib['method']
         func_method = getattr(self._browser, method.lower())
@@ -179,11 +194,7 @@ class FlaskClient(DriverAPI):
         else:
             url = self._url
         self._url = url
-        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
-        for key in form.inputs.keys():
-            input = form.inputs[key]
-            if getattr(input, 'type', '') == 'file' and key in data:
-                data[key] = open(data[key], 'rb')
+        data = self.serialize(form)
         _, self._response, self._redirect_chain = func_method(url, as_tuple=True, data=data, follow_redirects=True)
         self._handle_redirect_chain()
         self._post_load()
@@ -320,7 +331,10 @@ class FlaskClient(DriverAPI):
             elif control_type == 'radio':
                 control.value = value  # [option for option in control.options if option == value]
             elif control_type == 'select':
-                control.value = [value]
+                if isinstance(value, list):
+                    control.value = value
+                else:
+                    control.value = [value]
             else:
                 # text, textarea, password, tel
                 control.value = value
