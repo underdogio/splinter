@@ -120,3 +120,12 @@ class FlaskClientDriverTest(BaseBrowserTests, unittest.TestCase):
         for key, text in non_ascii_encodings.items():
             link = self.browser.find_link_by_text(text)
             self.assertEqual(key, link['id'])
+
+    def test_redirection(self):
+        """
+        when visiting /redirected, browser should be redirected to /redirected-location?come=get&some=true
+        browser.url should be updated
+        """
+        self.browser.visit('{}redirected'.format(EXAMPLE_APP))
+        assert 'I just been redirected to this location.' in self.browser.html
+        self.assertEqual('{}redirect-location?come=get&some=true'.format(EXAMPLE_APP), self.browser.url)

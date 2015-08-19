@@ -10,7 +10,6 @@ import re
 import time
 import sys
 
-from flask.testing import FlaskClient
 import lxml.html
 from lxml.cssselect import CSSSelector
 from splinter.cookie_manager import CookieManagerAPI
@@ -18,13 +17,6 @@ from splinter.driver import DriverAPI, ElementAPI
 from splinter.element_list import ElementList
 from splinter.exceptions import ElementDoesNotExist
 from splinter.request_handler.status_code import StatusCode
-
-
-class SplinterFlaskClient(FlaskClient):
-    """FlaskClient with redirect support"""
-    pass
-    # def open():
-    #     pass
 
 
 class CookieManager(CookieManagerAPI):
@@ -75,8 +67,7 @@ class FlaskClient(DriverAPI):
     def __init__(self, app, user_agent=None, wait_time=2):
         self.wait_time = wait_time
         app.config['TESTING'] = True
-        # https://github.com/mitsuhiko/flask/blob/0.10.1/flask/app.py#L812-L815
-        self._browser = SplinterFlaskClient(app.response_class, use_cookies=True)
+        self._browser = app.test_client()
         self._history = []
         self._cookie_manager = CookieManager(self._browser)
         self._last_urls = []
