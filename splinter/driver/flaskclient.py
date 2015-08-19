@@ -18,7 +18,7 @@ from splinter.driver import DriverAPI, ElementAPI
 from splinter.element_list import ElementList
 from splinter.exceptions import ElementDoesNotExist
 from splinter.request_handler.status_code import StatusCode
-from werkzeug.test import EnvironBuilder
+from werkzeug.test import ClientRedirectError, EnvironBuilder
 
 
 class SplinterFlaskClient(FlaskClient):
@@ -80,11 +80,11 @@ class SplinterFlaskClient(FlaskClient):
                                                       environ,
                                                       buffered=buffered)
 
+        # print response
         if self.response_wrapper is not None:
             response = self.response_wrapper(*response)
-        if as_tuple:
-            return environ, response
-        return response
+        # Modified code here
+        return response, redirect_chain
 
 
 class CookieManager(CookieManagerAPI):
@@ -158,7 +158,7 @@ class FlaskClient(DriverAPI):
 
     def visit(self, url):
         self._url = url
-        self._response = self._browser.get(url, follow_redirects=True)
+        self._response, self._redirect_chain = self._browser.get(url, follow_redirects=True)
         self._last_urls.append(url)
         self._post_load()
 
@@ -176,7 +176,7 @@ class FlaskClient(DriverAPI):
             input = form.inputs[key]
             if getattr(input, 'type', '') == 'file' and key in data:
                 data[key] = open(data[key], 'rb')
-        self._response = func_method(url, data=data, follow_redirects=True)
+        self._response, self._redirect_chain = func_method(url, data=data, follow_redirects=True)
         self._post_load()
         return self._response
 
