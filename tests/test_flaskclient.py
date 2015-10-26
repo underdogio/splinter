@@ -128,7 +128,7 @@ class FlaskClientDriverTestWithCustomHeaders(unittest.TestCase):
     def setUpClass(cls):
         custom_headers = {'X-Splinter-Customheaders-1': 'Hello',
                           'X-Splinter-Customheaders-2': 'Bye'}
-        cls.browser = Browser('flask', custom_headers=custom_headers)
+        cls.browser = Browser('flask', app=app, custom_headers=custom_headers)
 
     def test_create_a_flask_client_with_custom_headers(self):
         self.browser.visit(EXAMPLE_APP + 'headers')
