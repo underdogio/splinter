@@ -133,7 +133,7 @@ class FlaskClient(DriverAPI):
 
     driver_name = "flask"
 
-    def __init__(self, app, user_agent=None, wait_time=2):
+    def __init__(self, app, user_agent=None, wait_time=2, custom_headers=None):
         self.wait_time = wait_time
         app.config['TESTING'] = True
         # https://github.com/mitsuhiko/flask/blob/0.10.1/flask/app.py#L812-L815
@@ -142,6 +142,7 @@ class FlaskClient(DriverAPI):
         self._cookie_manager = CookieManager(self._browser)
         self._last_urls = []
         self._forms = {}
+        self._custom_headers = custom_headers if custom_headers else {}
 
     def __enter__(self):
         return self
@@ -165,7 +166,7 @@ class FlaskClient(DriverAPI):
 
     def visit(self, url):
         self._url = url
-        _, self._response, self._redirect_chain = self._browser.get(url, as_tuple=True, follow_redirects=True)
+        _, self._response, self._redirect_chain = self._browser.get(url, as_tuple=True, headers=self._custom_headers, follow_redirects=True)
         self._last_urls.append(url)
         self._handle_redirect_chain()
         self._post_load()
@@ -195,7 +196,7 @@ class FlaskClient(DriverAPI):
             url = self._url
         self._url = url
         data = self.serialize(form)
-        _, self._response, self._redirect_chain = func_method(url, as_tuple=True, data=data, follow_redirects=True)
+        _, self._response, self._redirect_chain = func_method(url, as_tuple=True, headers=self._custom_headers, data=data, follow_redirects=True)
         self._handle_redirect_chain()
         self._post_load()
         return self._response
