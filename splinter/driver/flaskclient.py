@@ -64,7 +64,7 @@ class FlaskClient(DriverAPI):
 
     driver_name = "flask"
 
-    def __init__(self, app, user_agent=None, wait_time=2):
+    def __init__(self, app, user_agent=None, wait_time=2, custom_headers=None):
         self.wait_time = wait_time
         app.config['TESTING'] = True
         self._browser = app.test_client()
@@ -72,6 +72,7 @@ class FlaskClient(DriverAPI):
         self._cookie_manager = CookieManager(self._browser)
         self._last_urls = []
         self._forms = {}
+        self._custom_headers = custom_headers if custom_headers else {}
 
     def __enter__(self):
         return self
@@ -89,7 +90,7 @@ class FlaskClient(DriverAPI):
 
     def visit(self, url):
         self._url = url
-        self._response = self._browser.get(url, follow_redirects=True)
+        self._response = self._browser.get(url, headers=self._custom_headers, follow_redirects=True)
         self._last_urls.append(url)
         self._post_load()
 
@@ -107,7 +108,7 @@ class FlaskClient(DriverAPI):
             input = form.inputs[key]
             if getattr(input, 'type', '') == 'file' and key in data:
                 data[key] = open(data[key], 'rb')
-        self._response = func_method(url, data=data, follow_redirects=True)
+        self._response = func_method(url, headers=self._custom_headers, data=data, follow_redirects=True)
         self._post_load()
         return self._response
 
