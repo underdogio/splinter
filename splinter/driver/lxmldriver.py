@@ -37,6 +37,14 @@ class LxmlDriver(DriverAPI):
     def visit(self, url):
         self._do_method('get', url)
 
+    def serialize(self, form):
+        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
+        for key in form.inputs.keys():
+            input = form.inputs[key]
+            if getattr(input, 'type', '') == 'file' and key in data:
+                data[key] = open(data[key], 'rb')
+        return data
+
     def submit(self, form):
         method = form.attrib.get('method', 'get').lower()
         action = form.attrib.get('action', '')
@@ -45,11 +53,7 @@ class LxmlDriver(DriverAPI):
         else:
             url = self._url
         self._url = url
-        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
-        for key in form.inputs.keys():
-            input = form.inputs[key]
-            if getattr(input, 'type', '') == 'file' and key in data:
-                data[key] = open(data[key], 'rb')
+        data = self.serialize(form)
         self._do_method(method, url, data=data)
         return self._response
 
