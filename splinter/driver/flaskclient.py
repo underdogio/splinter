@@ -155,13 +155,6 @@ class FlaskClient(LxmlDriver):
 
     def _do_method(self, method, url, data=None):
         self._url = url
-        _, self._response, self._redirect_chain = self._browser.get(url, as_tuple=True, follow_redirects=True)
-        self._last_urls.append(url)
-        self._handle_redirect_chain()
-        self._post_load()
-
-    def submit(self, form):
-        method = form.attrib['method']
         func_method = getattr(self._browser, method.lower())
         _, self._response, self._redirect_chain = func_method(url, as_tuple=True, data=data, follow_redirects=True)
         self._handle_redirect_chain()
