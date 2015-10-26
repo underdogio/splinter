@@ -38,7 +38,14 @@ class LxmlDriver(DriverAPI):
         self._do_method('get', url)
 
     def serialize(self, form):
-        data = dict(((k, v) for k, v in form.fields.items() if v is not None))
+        data = {}
+        for k, v in form.fields.items():
+            if v is None:
+                continue
+            if isinstance(v, lxml.html.MultipleSelectOptions):
+                data[k] = [val for val in v]
+            else:
+                data[k] = v
         for key in form.inputs.keys():
             input = form.inputs[key]
             if getattr(input, 'type', '') == 'file' and key in data:
