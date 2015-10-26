@@ -11,6 +11,8 @@ from splinter.cookie_manager import CookieManagerAPI
 from splinter.request_handler.status_code import StatusCode
 from werkzeug.test import ClientRedirectError, EnvironBuilder
 
+from .lxmldriver import LxmlDriver
+
 
 class SplinterFlaskClient(FlaskClient):
     """FlaskClient with redirect support"""
@@ -77,8 +79,6 @@ class SplinterFlaskClient(FlaskClient):
         if as_tuple:
             return environ, response, redirect_chain
         return response
-
-from .lxmldriver import LxmlDriver
 
 
 class CookieManager(CookieManagerAPI):
