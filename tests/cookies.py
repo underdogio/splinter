@@ -69,4 +69,4 @@ class CookiesTest(object):
         cookies = {'sha': 'zam'}
         self.browser.cookies.add(cookies)
         self.assertIn('sha', self.browser.cookies)
-        self.assertNotIn(self.browser.cookies)
+        self.assertNotIn('foo', self.browser.cookies)

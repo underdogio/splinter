@@ -54,7 +54,10 @@ class CookieManager(CookieManagerAPI):
         return cookies[item].value
 
     def __contains__(self, key):
-        return key in self._cookies.cookie_jar
+        for c in self._cookies.cookie_jar:
+            if c.name == key:
+                return True
+        return False
 
     def __eq__(self, other_object):
         if isinstance(other_object, dict):
